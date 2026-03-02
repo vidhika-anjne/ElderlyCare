@@ -1,0 +1,49 @@
+spring.application.name=elderlyCare
+
+# ─── PostgreSQL DataSource ────────────────────────────────────────────────────
+spring.datasource.url=jdbc:postgresql://localhost:5432/elderly_care_db
+spring.datasource.username=your_db_username
+spring.datasource.password=your_db_password
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+# ─── Connection Pool (HikariCP) ───────────────────────────────────────────────
+spring.datasource.hikari.pool-name=ElderlyCarHikariPool
+spring.datasource.hikari.maximum-pool-size=10
+spring.datasource.hikari.minimum-idle=2
+spring.datasource.hikari.connection-timeout=30000
+spring.datasource.hikari.idle-timeout=600000
+spring.datasource.hikari.max-lifetime=1800000
+
+# ─── JPA / Hibernate ─────────────────────────────────────────────────────────
+# validate  → checks schema on startup against entities (safe for production)
+# update    → auto-alters schema (dev only, NOT for production)
+# create    → drops + recreates schema on startup (for initial setup / testing)
+# none      → do nothing (use when Flyway/Liquibase manages schema)
+spring.jpa.hibernate.ddl-auto=validate
+spring.jpa.show-sql=false
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+# Let Hibernate know we are using PostgreSQL UUID type
+spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation=true
+
+# ─── SQL Initialisation ───────────────────────────────────────────────────────
+# Spring Boot will run schema.sql once on startup when mode=always.
+# Switch to 'never' after the first run (or use Flyway for migrations).
+spring.sql.init.mode=always
+spring.sql.init.schema-locations=classpath:schema.sql
+
+# ─── Jackson (JSON) ───────────────────────────────────────────────────────────
+# Note: spring.jackson.serialization.write-dates-as-timestamps is intentionally
+# omitted — SerializationFeature.WRITE_DATES_AS_TIMESTAMPS does not exist in
+# Jackson 3.0.x (tools.jackson). Dates are written as ISO-8601 by default.
+spring.jackson.default-property-inclusion=non_null
+
+# ─── Server ───────────────────────────────────────────────────────────────────
+server.port=8080
+
+# ─── JWT ─────────────────────────────────────────────────────────────────────
+# !! REQUIRED !! — must be a Base64-encoded 256-bit key.
+# Generate one: openssl rand -base64 32
+app.jwt.secret=your_base64_encoded_256bit_secret_key
+# Token lifetime: 24 hours in milliseconds
+app.jwt.expiration-ms=86400000
