@@ -8,6 +8,7 @@ import { StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider } from './src/context/AuthContext';
+import { MedicalProvider } from './src/context/MedicalContext';
 import AppNavigator from './src/navigation/AppNavigator';
 
 export default function App() {
@@ -15,7 +16,9 @@ export default function App() {
     <SafeAreaProvider>
       <StatusBar barStyle="light-content" backgroundColor="#1565C0" />
       <AuthProvider>
-        <AppNavigator />
+        <MedicalProvider>
+          <AppNavigator />
+        </MedicalProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );

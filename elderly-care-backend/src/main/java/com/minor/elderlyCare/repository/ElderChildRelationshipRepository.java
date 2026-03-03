@@ -44,4 +44,23 @@ public interface ElderChildRelationshipRepository
 
     /** All relationships for a given child (any status). */
     List<ElderChildRelationship> findByChildId(UUID childId);
+
+    // ── Pending-request queries (for in-app notifications) ────────────────
+
+    /**
+     * Pending relationships where the current user is a participant but NOT the requester.
+     * Used to show "incoming request" notifications.
+     */
+    List<ElderChildRelationship> findByElderIdAndStatusAndRequestedByIdNot(
+            UUID elderId, RelationshipStatus status, UUID requestedById);
+
+    List<ElderChildRelationship> findByChildIdAndStatusAndRequestedByIdNot(
+            UUID childId, RelationshipStatus status, UUID requestedById);
+
+    /**
+     * Pending relationships where the current user IS the requester.
+     * Used to show "sent request" status to the initiator.
+     */
+    List<ElderChildRelationship> findByStatusAndRequestedById(
+            RelationshipStatus status, UUID requestedById);
 }

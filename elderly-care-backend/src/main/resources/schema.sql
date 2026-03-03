@@ -1,7 +1,8 @@
 -- =============================================================================
 -- Elderly Care Monitoring System — Database Schema
 -- Database : PostgreSQL
--- Scope    : User management + Elder-Child relationship mapping ONLY
+-- Scope    : User management, relationships, vitals, lab reports,
+--            medications, and health alerts
 -- =============================================================================
 
 -- Enable pgcrypto for gen_random_uuid() — available in PostgreSQL 13+
@@ -165,3 +166,175 @@ CREATE INDEX IF NOT EXISTS idx_ecr_elder_status
 
 CREATE INDEX IF NOT EXISTS idx_ecr_child_status
     ON elder_child_relationship (child_id, status);           -- "active elders of a child"
+
+
+-- =============================================================================
+-- 4.  VITAL_RECORDS TABLE
+--
+--  Stores individual vital-sign measurements for elders.
+--  For BLOOD_PRESSURE, 'value' = systolic and 'secondary_value' = diastolic.
+--  The 'is_abnormal' flag is set by the application layer when a reading
+--  falls outside the normal range for the vital type.
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS vital_records (
+    id              UUID            NOT NULL DEFAULT gen_random_uuid(),
+    elder_id        UUID            NOT NULL,
+    vital_type      VARCHAR(25)     NOT NULL,
+    value           DOUBLE PRECISION NOT NULL,
+    secondary_value DOUBLE PRECISION,                        -- diastolic for blood pressure
+    unit            VARCHAR(20)     NOT NULL,
+    notes           VARCHAR(500),
+    recorded_at     TIMESTAMPTZ     NOT NULL,                -- when the measurement was taken
+    is_abnormal     BOOLEAN         NOT NULL DEFAULT FALSE,
+    created_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT pk_vital_records PRIMARY KEY (id),
+
+    CONSTRAINT fk_vr_elder
+        FOREIGN KEY (elder_id)
+        REFERENCES users (id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT chk_vr_vital_type
+        CHECK (vital_type IN ('BLOOD_SUGAR', 'BLOOD_PRESSURE', 'HEART_RATE',
+                               'OXYGEN_SATURATION', 'TEMPERATURE'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_vr_elder_id
+    ON vital_records (elder_id);
+
+CREATE INDEX IF NOT EXISTS idx_vr_vital_type
+    ON vital_records (vital_type);
+
+CREATE INDEX IF NOT EXISTS idx_vr_elder_type
+    ON vital_records (elder_id, vital_type);
+
+CREATE INDEX IF NOT EXISTS idx_vr_recorded_at
+    ON vital_records (recorded_at);
+
+
+-- =============================================================================
+-- 5.  LAB_REPORTS TABLE
+--
+--  Stores lab test reports with results and optional PDF file URL.
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS lab_reports (
+    id              UUID            NOT NULL DEFAULT gen_random_uuid(),
+    elder_id        UUID            NOT NULL,
+    test_name       VARCHAR(200)    NOT NULL,
+    result          VARCHAR(500)    NOT NULL,
+    test_date       DATE            NOT NULL,
+    file_url        VARCHAR(1000),                           -- URL to uploaded PDF/image
+    notes           VARCHAR(500),
+    created_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT pk_lab_reports PRIMARY KEY (id),
+
+    CONSTRAINT fk_lr_elder
+        FOREIGN KEY (elder_id)
+        REFERENCES users (id)
+        ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_lr_elder_id
+    ON lab_reports (elder_id);
+
+CREATE INDEX IF NOT EXISTS idx_lr_test_date
+    ON lab_reports (test_date);
+
+
+-- =============================================================================
+-- 6.  MEDICATIONS TABLE
+--
+--  Tracks prescribed medications including dosage, frequency, reminder time,
+--  and active/inactive status for history retention.
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS medications (
+    id              UUID            NOT NULL DEFAULT gen_random_uuid(),
+    elder_id        UUID            NOT NULL,
+    medicine_name   VARCHAR(200)    NOT NULL,
+    dosage          VARCHAR(100)    NOT NULL,
+    frequency       VARCHAR(100)    NOT NULL,
+    reminder_time   TIME,                                    -- local time for reminders
+    is_active       BOOLEAN         NOT NULL DEFAULT TRUE,
+    start_date      DATE,
+    end_date        DATE,
+    notes           VARCHAR(500),
+    created_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT pk_medications PRIMARY KEY (id),
+
+    CONSTRAINT fk_med_elder
+        FOREIGN KEY (elder_id)
+        REFERENCES users (id)
+        ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_med_elder_id
+    ON medications (elder_id);
+
+CREATE INDEX IF NOT EXISTS idx_med_elder_active
+    ON medications (elder_id, is_active);
+
+
+-- =============================================================================
+-- 7.  HEALTH_ALERTS TABLE
+--
+--  Auto-generated alerts when vital readings are abnormal.
+--  Lifecycle: ACTIVE → ACKNOWLEDGED → RESOLVED
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS health_alerts (
+    id                  UUID            NOT NULL DEFAULT gen_random_uuid(),
+    elder_id            UUID            NOT NULL,
+    vital_record_id     UUID,                                -- may be null for manual alerts
+    message             VARCHAR(1000)   NOT NULL,
+    severity            VARCHAR(10)     NOT NULL,
+    status              VARCHAR(15)     NOT NULL DEFAULT 'ACTIVE',
+    acknowledged_by     UUID,                                -- FK to users(id)
+    acknowledged_at     TIMESTAMPTZ,
+    resolved_at         TIMESTAMPTZ,
+    created_at          TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT pk_health_alerts PRIMARY KEY (id),
+
+    CONSTRAINT fk_ha_elder
+        FOREIGN KEY (elder_id)
+        REFERENCES users (id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_ha_vital_record
+        FOREIGN KEY (vital_record_id)
+        REFERENCES vital_records (id)
+        ON DELETE SET NULL,
+
+    CONSTRAINT fk_ha_acknowledged_by
+        FOREIGN KEY (acknowledged_by)
+        REFERENCES users (id)
+        ON DELETE SET NULL,
+
+    CONSTRAINT chk_ha_severity
+        CHECK (severity IN ('WARNING', 'CRITICAL')),
+
+    CONSTRAINT chk_ha_status
+        CHECK (status IN ('ACTIVE', 'ACKNOWLEDGED', 'RESOLVED'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_ha_elder_id
+    ON health_alerts (elder_id);
+
+CREATE INDEX IF NOT EXISTS idx_ha_status
+    ON health_alerts (status);
+
+CREATE INDEX IF NOT EXISTS idx_ha_elder_status
+    ON health_alerts (elder_id, status);
+
+CREATE INDEX IF NOT EXISTS idx_ha_created_at
+    ON health_alerts (created_at);

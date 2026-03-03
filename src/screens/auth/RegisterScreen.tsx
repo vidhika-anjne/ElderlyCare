@@ -68,6 +68,11 @@ export default function RegisterScreen() {
       });
       // AppNavigator picks up the new token automatically
     } catch (err: any) {
+      console.error('[RegisterScreen] registration error:', err);
+      if (err?.response) {
+        console.error('[RegisterScreen] response status:', err.response.status);
+        console.error('[RegisterScreen] response data:', JSON.stringify(err.response.data));
+      }
       const errors = err?.response?.data?.errors;
       if (errors) {
         const msgs = Object.values(errors).join('\n');

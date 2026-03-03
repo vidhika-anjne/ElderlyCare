@@ -130,6 +130,46 @@ public class RelationshipService {
                 .collect(Collectors.toList());
     }
 
+    // ── Pending-request queries (for in-app notifications) ─────────────────
+
+    /**
+     * Returns PENDING relationships where the given user is the recipient
+     * (i.e. they did NOT send the request). These are "incoming" requests
+     * the user should see as notifications they can accept or reject.
+     */
+    @Transactional(readOnly = true)
+    public List<RelationshipResponse> getIncomingPendingRequests(UUID userId) {
+        User user = loadActiveUser(userId);
+        List<ElderChildRelationship> incoming;
+
+        if (user.getRole() == Role.ELDER) {
+            incoming = relationshipRepository
+                    .findByElderIdAndStatusAndRequestedByIdNot(
+                            userId, RelationshipStatus.PENDING, userId);
+        } else {
+            incoming = relationshipRepository
+                    .findByChildIdAndStatusAndRequestedByIdNot(
+                            userId, RelationshipStatus.PENDING, userId);
+        }
+
+        return incoming.stream()
+                .map(RelationshipResponse::from)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Returns PENDING relationships where the given user IS the requester.
+     * These are "sent" requests, so the user can see their outgoing status.
+     */
+    @Transactional(readOnly = true)
+    public List<RelationshipResponse> getSentPendingRequests(UUID userId) {
+        return relationshipRepository
+                .findByStatusAndRequestedById(RelationshipStatus.PENDING, userId)
+                .stream()
+                .map(RelationshipResponse::from)
+                .collect(Collectors.toList());
+    }
+
     // ── Private helpers ───────────────────────────────────────────────────────
 
     private User loadActiveUser(UUID userId) {

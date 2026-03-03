@@ -93,4 +93,32 @@ public class RelationshipController {
         return ResponseEntity.ok(
                 relationshipService.getMyElders(principal.getUser().getId()));
     }
+
+    /**
+     * GET /api/relationships/pending/incoming
+     *
+     * Returns all PENDING requests where the current user is the recipient
+     * (not the requester). These are shown as "accept" notifications.
+     */
+    @GetMapping("/pending/incoming")
+    public ResponseEntity<List<RelationshipResponse>> getIncomingPendingRequests(
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        return ResponseEntity.ok(
+                relationshipService.getIncomingPendingRequests(
+                        principal.getUser().getId()));
+    }
+
+    /**
+     * GET /api/relationships/pending/sent
+     *
+     * Returns all PENDING requests where the current user IS the requester.
+     * These are shown as "awaiting acceptance" status notifications.
+     */
+    @GetMapping("/pending/sent")
+    public ResponseEntity<List<RelationshipResponse>> getSentPendingRequests(
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        return ResponseEntity.ok(
+                relationshipService.getSentPendingRequests(
+                        principal.getUser().getId()));
+    }
 }

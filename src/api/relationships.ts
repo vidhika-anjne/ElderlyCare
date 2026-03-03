@@ -20,3 +20,11 @@ export const getMyChildren = (): Promise<RelationshipResponse[]> =>
 /** GET /api/relationships/my-elders — [CHILD] all ACTIVE elders being monitored */
 export const getMyElders = (): Promise<RelationshipResponse[]> =>
   apiClient.get<RelationshipResponse[]>('/api/relationships/my-elders').then(r => r.data);
+
+/** GET /api/relationships/pending/incoming — PENDING requests where current user is recipient */
+export const getIncomingPendingRequests = (): Promise<RelationshipResponse[]> =>
+  apiClient.get<RelationshipResponse[]>('/api/relationships/pending/incoming').then(r => r.data);
+
+/** GET /api/relationships/pending/sent — PENDING requests sent by current user */
+export const getSentPendingRequests = (): Promise<RelationshipResponse[]> =>
+  apiClient.get<RelationshipResponse[]>('/api/relationships/pending/sent').then(r => r.data);
