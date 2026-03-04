@@ -40,7 +40,7 @@ public class MedicationResponse {
     private String dosage;
     private String frequency;
     private LocalTime reminderTime;
-    private boolean isActive;
+    private Boolean isActive;
     private LocalDate startDate;
     private LocalDate endDate;
     private String notes;
@@ -55,7 +55,7 @@ public class MedicationResponse {
                 .dosage(m.getDosage())
                 .frequency(m.getFrequency())
                 .reminderTime(m.getReminderTime())
-                .isActive(m.isActive())
+                .isActive(m.isActive())  // entity returns primitive boolean, autoboxed to Boolean
                 .startDate(m.getStartDate())
                 .endDate(m.getEndDate())
                 .notes(m.getNotes())

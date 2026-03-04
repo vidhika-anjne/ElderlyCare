@@ -61,6 +61,8 @@ export default function AddVitalScreen() {
         vitalType: selectedType,
         value: Number(value),
         secondaryValue: isBP ? Number(secondaryValue) : undefined,
+        unit: selectedOption!.unit,
+        recordedAt: new Date().toISOString(),
         notes: notes.trim() || undefined,
       });
       Alert.alert('Success', 'Vital reading recorded successfully!', [

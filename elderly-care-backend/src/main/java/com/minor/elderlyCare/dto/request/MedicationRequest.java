@@ -46,8 +46,8 @@ public class MedicationRequest {
 
     private LocalTime reminderTime;
 
-    @Builder.Default
-    private boolean isActive = true;
+    /** Defaults to true when not supplied. */
+    private Boolean isActive = Boolean.TRUE;
 
     private LocalDate startDate;
     private LocalDate endDate;

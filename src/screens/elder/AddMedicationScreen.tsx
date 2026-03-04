@@ -44,6 +44,20 @@ export default function AddMedicationScreen() {
       Alert.alert('Missing Fields', 'Name, dosage, frequency and start date are required.');
       return;
     }
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(startDate.trim())) {
+      Alert.alert('Invalid Date', 'Start date must be in YYYY-MM-DD format (e.g. 2026-03-04).');
+      return;
+    }
+    if (endDate.trim() && !dateRegex.test(endDate.trim())) {
+      Alert.alert('Invalid Date', 'End date must be in YYYY-MM-DD format (e.g. 2026-06-30).');
+      return;
+    }
+    const timeRegex = /^\d{2}:\d{2}$/;
+    if (reminderTime.trim() && !timeRegex.test(reminderTime.trim())) {
+      Alert.alert('Invalid Time', 'Reminder time must be in HH:mm format (e.g. 08:00).');
+      return;
+    }
     if (!user) return;
 
     setLoading(true);

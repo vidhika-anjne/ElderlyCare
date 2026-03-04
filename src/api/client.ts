@@ -3,13 +3,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
  * Base URL configuration:
- *   Physical device (USB + adb reverse tcp:8080 tcp:8080) → localhost
- *   Android emulator  → 10.0.2.2  (maps to host machine's localhost)
- *   iOS simulator     → localhost
+ *   Physical device (USB) → localhost  ← DEFAULT
+ *     Required: run `adb reverse tcp:8080 tcp:8080` each time the device reconnects.
+ *   Android emulator      → 10.0.2.2  (maps to host machine's localhost)
+ *   iOS simulator         → localhost
  *
- * Current setup: physical device with adb reverse active.
- * If switching to emulator, change to 'http://10.0.2.2:8080'.
+ * To switch to Android emulator, change BASE_URL to 'http://10.0.2.2:8080'.
  */
+
+// DEFAULT: physical device via USB with adb reverse active
+// Run once per session: adb reverse tcp:8080 tcp:8080
 export const BASE_URL = 'http://localhost:8080';
 
 const apiClient = axios.create({

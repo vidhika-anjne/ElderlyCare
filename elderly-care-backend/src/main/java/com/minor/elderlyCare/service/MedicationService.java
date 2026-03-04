@@ -33,7 +33,7 @@ public class MedicationService {
                 .dosage(request.getDosage())
                 .frequency(request.getFrequency())
                 .reminderTime(request.getReminderTime())
-                .isActive(request.isActive())
+                .isActive(Boolean.TRUE.equals(request.getIsActive()))
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .notes(request.getNotes())
@@ -52,7 +52,7 @@ public class MedicationService {
         medication.setDosage(request.getDosage());
         medication.setFrequency(request.getFrequency());
         medication.setReminderTime(request.getReminderTime());
-        medication.setActive(request.isActive());
+        medication.setActive(Boolean.TRUE.equals(request.getIsActive()));
         medication.setStartDate(request.getStartDate());
         medication.setEndDate(request.getEndDate());
         medication.setNotes(request.getNotes());
