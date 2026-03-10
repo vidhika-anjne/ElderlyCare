@@ -12,6 +12,7 @@ import {
   Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
 import { useAuth } from '../../context/AuthContext';
 import { createLabReport } from '../../api/labReports';
@@ -27,6 +28,17 @@ export default function AddLabReportScreen() {
   const [fileUrl, setFileUrl] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  const onDateChange = (_event: DateTimePickerEvent, selectedDate?: Date) => {
+    setShowDatePicker(Platform.OS === 'ios');
+    if (selectedDate) {
+      const y = selectedDate.getFullYear();
+      const m = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const d = String(selectedDate.getDate()).padStart(2, '0');
+      setTestDate(`${y}-${m}-${d}`);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!testName.trim() || !result.trim() || !testDate.trim()) {
@@ -93,17 +105,23 @@ export default function AddLabReportScreen() {
             returnKeyType="next"
           />
 
-          <Text style={styles.label}>Test Date * (YYYY-MM-DD)</Text>
-          <TextInput
+          <Text style={styles.label}>Test Date *</Text>
+          <TouchableOpacity
             style={styles.input}
-            value={testDate}
-            onChangeText={setTestDate}
-            placeholder="e.g. 2026-03-01"
-            placeholderTextColor={COLORS.disabled}
-            keyboardType="numeric"
-            maxLength={10}
-            returnKeyType="next"
-          />
+            onPress={() => setShowDatePicker(true)}
+            activeOpacity={0.8}>
+            <Text style={testDate ? styles.inputText : styles.placeholderText}>
+              {testDate || 'Select date'}
+            </Text>
+          </TouchableOpacity>
+          {showDatePicker && (
+            <DateTimePicker
+              value={testDate ? new Date(testDate + 'T00:00:00') : new Date()}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={onDateChange}
+            />
+          )}
 
           <Text style={styles.label}>File URL (optional)</Text>
           <TextInput
@@ -187,4 +205,6 @@ const styles = StyleSheet.create({
   },
   btnDisabled: { opacity: 0.6 },
   submitText: { color: '#fff', fontSize: FONT_SIZE.md, fontWeight: '700' },
+  inputText: { fontSize: FONT_SIZE.md, color: COLORS.text },
+  placeholderText: { fontSize: FONT_SIZE.md, color: COLORS.disabled },
 });

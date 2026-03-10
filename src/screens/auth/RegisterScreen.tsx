@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
 import { useAuth } from '../../context/AuthContext';
 import { AuthStackParamList, Role } from '../../types';
@@ -32,6 +33,17 @@ export default function RegisterScreen() {
   const [role, setRole] = useState<Role | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showDobPicker, setShowDobPicker] = useState(false);
+
+  const onDobChange = (_event: DateTimePickerEvent, selectedDate?: Date) => {
+    setShowDobPicker(Platform.OS === 'ios');
+    if (selectedDate) {
+      const y = selectedDate.getFullYear();
+      const m = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const d = String(selectedDate.getDate()).padStart(2, '0');
+      setDateOfBirth(`${y}-${m}-${d}`);
+    }
+  };
 
   const handleRegister = async () => {
     if (!name.trim() || !email.trim() || !password || !role) {
@@ -217,17 +229,23 @@ export default function RegisterScreen() {
 
           {/* Date of Birth */}
           <Text style={styles.label}>Date of Birth (optional)</Text>
-          <TextInput
+          <TouchableOpacity
             style={styles.input}
-            value={dateOfBirth}
-            onChangeText={setDateOfBirth}
-            placeholder="YYYY-MM-DD"
-            placeholderTextColor={COLORS.disabled}
-            keyboardType="numeric"
-            maxLength={10}
-            returnKeyType="done"
-            onSubmitEditing={handleRegister}
-          />
+            onPress={() => setShowDobPicker(true)}
+            activeOpacity={0.8}>
+            <Text style={dateOfBirth ? styles.inputText : styles.placeholderText}>
+              {dateOfBirth || 'Select date'}
+            </Text>
+          </TouchableOpacity>
+          {showDobPicker && (
+            <DateTimePicker
+              value={dateOfBirth ? new Date(dateOfBirth + 'T00:00:00') : new Date()}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={onDobChange}
+              maximumDate={new Date()}
+            />
+          )}
 
           {/* Submit */}
           <TouchableOpacity
@@ -339,4 +357,6 @@ const styles = StyleSheet.create({
   linkRow: { alignItems: 'center', marginTop: SPACING.md },
   linkText: { fontSize: FONT_SIZE.sm, color: COLORS.subtext },
   linkAccent: { color: COLORS.primary, fontWeight: '700' },
+  inputText: { fontSize: FONT_SIZE.md, color: COLORS.text },
+  placeholderText: { fontSize: FONT_SIZE.md, color: COLORS.disabled },
 });

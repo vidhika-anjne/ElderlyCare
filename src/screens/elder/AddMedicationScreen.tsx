@@ -12,6 +12,7 @@ import {
   Platform,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -38,6 +39,35 @@ export default function AddMedicationScreen() {
   const [endDate, setEndDate] = useState(existing?.endDate ?? '');
   const [notes, setNotes] = useState(existing?.notes ?? '');
   const [loading, setLoading] = useState(false);
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker, setShowEndPicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+
+  const formatDate = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  const onStartDateChange = (_event: DateTimePickerEvent, selectedDate?: Date) => {
+    setShowStartPicker(Platform.OS === 'ios');
+    if (selectedDate) setStartDate(formatDate(selectedDate));
+  };
+
+  const onEndDateChange = (_event: DateTimePickerEvent, selectedDate?: Date) => {
+    setShowEndPicker(Platform.OS === 'ios');
+    if (selectedDate) setEndDate(formatDate(selectedDate));
+  };
+
+  const onTimeChange = (_event: DateTimePickerEvent, selectedDate?: Date) => {
+    setShowTimePicker(Platform.OS === 'ios');
+    if (selectedDate) {
+      const h = String(selectedDate.getHours()).padStart(2, '0');
+      const min = String(selectedDate.getMinutes()).padStart(2, '0');
+      setReminderTime(`${h}:${min}`);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!medicineName.trim() || !dosage.trim() || !frequency.trim() || !startDate.trim()) {
@@ -137,39 +167,67 @@ export default function AddMedicationScreen() {
             returnKeyType="next"
           />
 
-          <Text style={styles.label}>Reminder Time (optional, HH:mm)</Text>
-          <TextInput
+          <Text style={styles.label}>Reminder Time (optional)</Text>
+          <TouchableOpacity
             style={styles.input}
-            value={reminderTime}
-            onChangeText={setReminderTime}
-            placeholder="e.g. 08:00"
-            placeholderTextColor={COLORS.disabled}
-            returnKeyType="next"
-          />
+            onPress={() => setShowTimePicker(true)}
+            activeOpacity={0.8}>
+            <Text style={reminderTime ? styles.inputText : styles.placeholderText}>
+              {reminderTime || 'Select time'}
+            </Text>
+          </TouchableOpacity>
+          {showTimePicker && (
+            <DateTimePicker
+              value={(() => {
+                if (reminderTime) {
+                  const [h, m] = reminderTime.split(':').map(Number);
+                  const d = new Date(); d.setHours(h, m, 0, 0);
+                  return d;
+                }
+                return new Date();
+              })()}
+              mode="time"
+              is24Hour={true}
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={onTimeChange}
+            />
+          )}
 
-          <Text style={styles.label}>Start Date * (YYYY-MM-DD)</Text>
-          <TextInput
+          <Text style={styles.label}>Start Date *</Text>
+          <TouchableOpacity
             style={styles.input}
-            value={startDate}
-            onChangeText={setStartDate}
-            placeholder="e.g. 2026-03-01"
-            placeholderTextColor={COLORS.disabled}
-            keyboardType="numeric"
-            maxLength={10}
-            returnKeyType="next"
-          />
+            onPress={() => setShowStartPicker(true)}
+            activeOpacity={0.8}>
+            <Text style={startDate ? styles.inputText : styles.placeholderText}>
+              {startDate || 'Select date'}
+            </Text>
+          </TouchableOpacity>
+          {showStartPicker && (
+            <DateTimePicker
+              value={startDate ? new Date(startDate + 'T00:00:00') : new Date()}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={onStartDateChange}
+            />
+          )}
 
-          <Text style={styles.label}>End Date (optional, YYYY-MM-DD)</Text>
-          <TextInput
+          <Text style={styles.label}>End Date (optional)</Text>
+          <TouchableOpacity
             style={styles.input}
-            value={endDate}
-            onChangeText={setEndDate}
-            placeholder="Leave blank for ongoing"
-            placeholderTextColor={COLORS.disabled}
-            keyboardType="numeric"
-            maxLength={10}
-            returnKeyType="next"
-          />
+            onPress={() => setShowEndPicker(true)}
+            activeOpacity={0.8}>
+            <Text style={endDate ? styles.inputText : styles.placeholderText}>
+              {endDate || 'Select date'}
+            </Text>
+          </TouchableOpacity>
+          {showEndPicker && (
+            <DateTimePicker
+              value={endDate ? new Date(endDate + 'T00:00:00') : new Date()}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={onEndDateChange}
+            />
+          )}
 
           <Text style={styles.label}>Notes (optional)</Text>
           <TextInput
@@ -243,4 +301,6 @@ const styles = StyleSheet.create({
   },
   btnDisabled: { opacity: 0.6 },
   submitText: { color: '#fff', fontSize: FONT_SIZE.md, fontWeight: '700' },
+  inputText: { fontSize: FONT_SIZE.md, color: COLORS.text },
+  placeholderText: { fontSize: FONT_SIZE.md, color: COLORS.disabled },
 });
